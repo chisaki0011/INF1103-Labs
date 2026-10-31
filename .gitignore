@@ -1,0 +1,4 @@
+# Files that are deprecated or no longer needed for the project
+auditor.py
+old_persistent_auditor.py
+modular_auditor.py
