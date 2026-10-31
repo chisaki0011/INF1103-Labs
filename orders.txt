@@ -1,0 +1,3 @@
+1001,Mouse,1
+1002,computer,1
+1003,Laptop,1
