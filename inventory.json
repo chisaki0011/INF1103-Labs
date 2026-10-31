@@ -16,5 +16,11 @@
     "name": "Keyboard",
     "price": 45.0,
     "stock": 25
+  },
+  {
+    "id": "P004",
+    "name": "Earpiece",
+    "price": 29.9,
+    "stock": 100
   }
 ]
