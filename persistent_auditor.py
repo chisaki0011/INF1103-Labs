@@ -1,114 +1,236 @@
-# persistent_auditor.py 
-# Starting from scratch. 
-# program will read a file of orders, display them, and allow the user to add a new order. 
-# The new order will be validated and appended to the file.
+import json
+import os
 
-ORDERS_FILE = "orders.txt"
+INVENTORY_FILE = "inventory.json"
 
 
-def read_orders(filename):
-    """Read file into a list. Returns list of non-empty lines."""
-    try:
-        with open(filename, "r") as file:
-            order_lines = file.readlines()
-    except FileNotFoundError:
-        return []
-    return [line.strip() for line in order_lines if line.strip()]
+# ---------------------------------------------------------------------------
+# Persistence (reused pattern from persistent_auditor.read_orders / append_order)
+# ---------------------------------------------------------------------------
+def load_inventory(filename=INVENTORY_FILE):
+    """Load inventory list from JSON file if it exists, else start empty.
 
+    Args:
+        filename (str): JSON file to load from.
 
-def get_max_id(order_lines):
-    """Get max order id from list. Returns 1000 if list is empty."""
-    order_ids = []
-    for line in order_lines:
-        parts = line.split(",")
-        if len(parts) != 3:
-            continue
+    Returns:
+        list: List of product dictionaries.
+    """
+    if os.path.exists(filename):
+        print(f"{filename} found.")
         try:
-            order_ids.append(int(parts[0].strip()))
-        except ValueError:
-            continue
-    if len(order_ids) == 0:
-        return 1000
-    return max(order_ids)
+            with open(filename, "r") as file:
+                data = json.load(file)
+            if not isinstance(data, list):
+                print(f"Error: {filename} is corrupted. Starting with empty inventory.")
+                return []
+            print("Inventory loaded successfully.")
+            return data
+        except json.JSONDecodeError:
+            print(f"Error: {filename} contains invalid JSON. Starting with empty inventory.")
+            return []
+        except OSError as e:
+            print(f"Error loading inventory: {e}")
+            return []
+    else:
+        print(f"{filename} not found.")
+        print("Starting with empty inventory.")
+        return []
 
 
-def generate_new_id(max_id):
-    """Generate next order id."""
-    return max_id + 1
+def save_inventory(inventory, filename=INVENTORY_FILE):
+    """Save inventory list to JSON file.
+
+    Args:
+        inventory (list): List of product dictionaries.
+        filename (str): JSON file to save to.
+
+    Returns:
+        bool: True if save succeeded, False otherwise.
+    """
+    try:
+        with open(filename, "w") as file:
+            json.dump(inventory, file, indent=2)
+        return True
+    except OSError as e:
+        print(f"Error saving inventory: {e}")
+        return False
+    except TypeError as e:
+        print(f"Error saving inventory: invalid data - {e}")
+        return False
 
 
-def get_valid_item_name(prompt="Enter item name: "):
-    """Validate: non-empty, letters/spaces only."""
+# ---------------------------------------------------------------------------
+# Helpers (reused patterns from modular_auditor.get_valid_input and
+# persistent_auditor.get_valid_item_name / get_valid_quantity)
+# ---------------------------------------------------------------------------
+def find_product(inventory, product_id):
+    """Return product dict matching product_id, or None if not found."""
+    for product in inventory:
+        if str(product.get("id", "")).lower() == product_id.lower():
+            return product
+    return None
+
+
+def get_valid_price(prompt="Price: "):
+    """Prompt until a valid price (> 0) is entered. Returns float."""
     while True:
-        item_name = input(prompt).strip()
-        if not item_name:
-            print("Item name cannot be empty.")
+        user_input = input(prompt).strip()
+        try:
+            price = float(user_input)
+        except ValueError:
+            print("Invalid price. Please enter a valid number.")
             continue
-        if not item_name.replace(" ", "").isalpha():
-            print("Item name must contain only letters and spaces.")
+        if price <= 0:
+            print("Price must be greater than 0.")
             continue
-        return item_name
+        return price
 
 
-def get_valid_quantity(prompt="Enter quantity: "):
-    """Validate: positive integer, max 500."""
+def get_valid_stock(prompt="Stock Quantity: "):
+    """Prompt until a valid stock (positive int, max 500) is entered.
+
+    Reuses quantity rules from auditor.py / persistent_auditor.py.
+    Returns int.
+    """
     while True:
         user_input = input(prompt).strip()
         if not user_input.isdigit():
-            print("Quantity must be a positive integer.")
+            print("Invalid stock quantity. Please enter a valid integer.")
             continue
         quantity = int(user_input)
         if quantity <= 0:
-            print("Quantity must be a positive integer.")
+            print("Stock quantity must be a positive integer.")
             continue
         if quantity > 500:
-            print("Quantity exceeds maximum limit of 500.")
+            print("Stock quantity exceeds maximum limit of 500.")
             continue
         return quantity
 
 
-def append_order(filename, new_id, item_name, quantity):
-    """Append one order using append mode. Returns the order line."""
-    order_line = f"{new_id},{item_name},{quantity}\n"
-    with open(filename, "a") as file:
-        file.write(order_line)
-    return order_line.strip()
+# ---------------------------------------------------------------------------
+# Data Manipulation (required functions)
+# ---------------------------------------------------------------------------
+def display_all(inventory):
+    """Display all products in the inventory list."""
+    print("Current Inventory")
+    print("------------------------------------------------")
+    if not inventory:
+        print("No products in inventory.")
+    else:
+        for product in inventory:
+            try:
+                pid = product["id"]
+                name = product["name"]
+                price = float(product["price"])
+                stock = int(product["stock"])
+                print(f"ID: {pid} | Name: {name} | Price: ${price:.2f} | Stock: {stock}")
+            except (KeyError, ValueError, TypeError):
+                print(f"Error: Skipping corrupted product entry: {product}")
+    print("------------------------------------------------")
 
 
-def display_orders(order_lines):
-    """Loop through list and display each order."""
-    if not order_lines:
-        print("No orders found.")
+def add_product(inventory):
+    """Add a new product to the inventory list (with validation)."""
+    print("Add New Product")
+    product_id = input("Product ID: ").strip()
+    if not product_id:
+        print("Error: Product ID cannot be empty.")
         return
-    print(f"\nTotal orders: {len(order_lines)}")
-    for line in order_lines:
-        print(line)
+    if find_product(inventory, product_id) is not None:
+        print("Error: Product ID already exists.")
+        return
+
+    product_name = input("Product Name: ").strip()
+    if not product_name:
+        print("Error: Product name cannot be empty.")
+        return
+    if not product_name.replace(" ", "").isalpha():
+        print("Error: Product name must contain only letters and spaces.")
+        return
+
+    try:
+        price_input = input("Price: ").strip()
+        price = float(price_input)
+    except ValueError:
+        print("Error: Invalid price. Please enter a valid number.")
+        return
+    if price <= 0:
+        print("Error: Price must be greater than 0.")
+        return
+
+    stock_input = input("Stock Quantity: ").strip()
+    if not stock_input.isdigit():
+        print("Error: Invalid stock quantity. Please enter a valid integer.")
+        return
+    stock = int(stock_input)
+    if stock <= 0:
+        print("Error: Stock quantity must be a positive integer.")
+        return
+    if stock > 500:
+        print("Error: Stock quantity exceeds maximum limit of 500.")
+        return
+
+    inventory.append({
+        "id": product_id,
+        "name": product_name,
+        "price": price,
+        "stock": stock
+    })
+    print("Product added successfully!")
 
 
-def main():
-    # Input: open + read file into list (array)
-    order_lines = read_orders(ORDERS_FILE)
-    print(f"Loaded {len(order_lines)} order(s) from {ORDERS_FILE}.")
-    display_orders(order_lines)
+def update_stock(inventory):
+    """Update stock quantity for an existing product."""
+    print("Update Stock")
+    product_id = input("Enter Product ID: ").strip()
+    product = find_product(inventory, product_id)
+    if product is None:
+        print("Product not found.")
+        return
 
-    # Process: get max id -> generate new id
-    max_id = get_max_id(order_lines)
-    new_id = generate_new_id(max_id)
-    print(f"\nMax order id: {max_id}, new order id: {new_id}")
+    print("Product Found:")
+    print(f"Name: {product['name']}")
+    try:
+        print(f"Current Stock: {int(product['stock'])}")
+    except (ValueError, TypeError, KeyError):
+        print("Error: Current stock value is corrupted.")
+        return
 
-    # Input: get one new order (validated)
-    print("\nEnter new order details:")
-    item_name = get_valid_item_name()
-    quantity = get_valid_quantity()
+    stock_input = input("New Stock Quantity: ").strip()
+    if not stock_input.isdigit():
+        print("Error: Invalid stock quantity. Please enter a valid integer.")
+        return
+    new_stock = int(stock_input)
+    if new_stock <= 0:
+        print("Error: Stock quantity must be a positive integer.")
+        return
+    if new_stock > 500:
+        print("Error: Stock quantity exceeds maximum limit of 500.")
+        return
 
-    # Output: append + write to file
-    new_order = append_order(ORDERS_FILE, new_id, item_name, quantity)
-    print(f"Appended: {new_order}")
-
-    # Verify: re-read and display
-    updated_orders = read_orders(ORDERS_FILE)
-    display_orders(updated_orders)
+    product["stock"] = new_stock
+    print("Stock updated successfully!")
 
 
-if __name__ == "__main__":
-    main()
+def search_product(inventory):
+    """Search for a product by ID and display its details."""
+    print("Search Product")
+    product_id = input("Enter Product ID: ").strip()
+    product = find_product(inventory, product_id)
+    if product is None:
+        print("Product not found.")
+        return
+
+    print("Product Found")
+    print("------------------------------------------------")
+    try:
+        price = float(product["price"])
+        stock = int(product["stock"])
+        print(f"ID: {product['id']}")
+        print(f"Name: {product['name']}")
+        print(f"Price: ${price:.2f}")
+        print(f"Stock: {stock}")
+    except (KeyError, ValueError, TypeError):
+        print(f"Error: Product entry is corrupted: {product}")
+    print("------------------------------------------------")
