@@ -1,12 +1,12 @@
 """
-Functions Module - Week 5 OOP Refactor
-=======================================
+Functions Module - Lab 7 (Inheritance, Overriding and Abstraction)
+===================================================================
 
 This module contains all helper functions for file I/O, input validation,
 and display operations. These are extracted from persistent_auditor.py
 to follow the Single Responsibility Principle and separation of concerns.
 
-The Product class handles product data/state.
+The product classes handle product data/state.
 The app.py module handles the main CLI menu and user interaction.
 This module handles everything else (file I/O, prompts, displays).
 """
@@ -14,7 +14,7 @@ This module handles everything else (file I/O, prompts, displays).
 import json
 import os
 
-from product import Product
+from product_factory import create_product
 
 
 # ---------------------------------------------------------------------------
@@ -30,6 +30,10 @@ def load_inventory(filename=INVENTORY_FILE):
     This function handles all error cases: missing file, corrupted JSON,
     invalid data types, etc.
 
+    Each record keeps its 'type' identifier ('physical' or 'digital') and the
+    matching extra field ('weight' or 'download_size'), so the factory can
+    rebuild the correct subclass later.
+
     Args:
         filename (str): Path to the JSON file to load.
         
@@ -40,7 +44,7 @@ def load_inventory(filename=INVENTORY_FILE):
     Example:
         >>> inventory = load_inventory("inventory.json")
         >>> print(len(inventory))
-        4
+        7
     """
     if os.path.exists(filename):
         print(f"{filename} found.")
@@ -66,7 +70,8 @@ def save_inventory(inventory, filename=INVENTORY_FILE):
 
     Accepts either an Inventory object (the OOP system) or a plain list of
     Product/dictionary objects (the Week 5 functional system). Products are
-    converted with Product.to_dict() so the result is JSON-serialisable.
+    converted with Product.to_dict(), which each subclass extends with its
+    own 'type' identifier and extra attributes, so nothing is lost on save.
 
     Args:
         inventory (Inventory | list): Inventory object or list of products.
@@ -269,6 +274,66 @@ def get_valid_stock():
             print("Error: Invalid input. Please enter an integer value (e.g., 50).")
 
 
+def get_valid_weight():
+    """Prompt the user for a valid weight in kilograms (must be >= 0).
+
+    Used when adding a PhysicalProduct.
+
+    Returns:
+        float: A valid weight value (>= 0).
+
+    Example:
+        >>> weight = get_valid_weight()
+        >>> print(weight)
+        2.5
+    """
+    while True:
+        try:
+            raw_input = input("Enter weight in kg (must be >= 0): ").strip()
+            if not raw_input:
+                print("Error: Weight cannot be empty.")
+                continue
+
+            weight = float(raw_input)
+            if weight < 0:
+                print("Error: Weight cannot be negative. Please try again.")
+                continue
+
+            return weight
+        except ValueError:
+            print("Error: Invalid input. Please enter a numeric value (e.g., 2.5).")
+
+
+def get_valid_download_size():
+    """Prompt the user for a valid download size in megabytes (must be > 0).
+
+    Used when adding a DigitalProduct.
+
+    Returns:
+        float: A valid download size value (> 0).
+
+    Example:
+        >>> size = get_valid_download_size()
+        >>> print(size)
+        1200.0
+    """
+    while True:
+        try:
+            raw_input = input("Enter download size in MB (must be > 0): ").strip()
+            if not raw_input:
+                print("Error: Download size cannot be empty.")
+                continue
+
+            download_size = float(raw_input)
+            if download_size <= 0:
+                print("Error: Download size must be greater than zero.")
+                continue
+
+            return download_size
+        except ValueError:
+            print("Error: Invalid input. Please enter a numeric value (e.g., 1200).")
+
+
 def get_valid_product_id(inventory):
     """Prompt user for a valid product ID that exists in inventory.
     
@@ -437,7 +502,7 @@ def update_stock(product_id, inventory):
     new_stock = get_valid_stock()
     
     # Create a Product object to use its encapsulated update_stock method
-    product_obj = Product(product_data)
+    product_obj = create_product(product_data)
 
     old_stock = product_obj.get_stock()
     product_obj.update_stock(new_stock)

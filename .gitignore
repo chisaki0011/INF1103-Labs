@@ -5,6 +5,17 @@
 __pycache__/
 *.py[cod]
 
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local environment variables
+.env
+
+# Test / tooling caches
+.pytest_cache/
+
 # Backup and old files (*.bak, *old*.py)
 *.bak
 *old*.py

@@ -1,26 +1,58 @@
 [
   {
+    "type": "physical",
     "id": "P001",
     "name": "Laptop",
     "price": 1200.0,
-    "stock": 15
+    "stock": 15,
+    "weight": 2.2
   },
   {
+    "type": "physical",
     "id": "P002",
     "name": "Mouse",
     "price": 25.5,
-    "stock": 40
+    "stock": 40,
+    "weight": 0.12
   },
   {
+    "type": "physical",
     "id": "P003",
     "name": "Keyboard",
     "price": 45.0,
-    "stock": 25
+    "stock": 25,
+    "weight": 0.85
   },
   {
+    "type": "physical",
     "id": "P004",
     "name": "Earpiece",
     "price": 29.9,
-    "stock": 100
+    "stock": 100,
+    "weight": 0.05
+  },
+  {
+    "type": "physical",
+    "id": "P005",
+    "name": "Microphone",
+    "price": 299.9,
+    "stock": 50,
+    "weight": 0.4
+  },
+  {
+    "type": "digital",
+    "id": "P006",
+    "name": "Antivirus 2026",
+    "price": 49.9,
+    "stock": 999,
+    "download_size": 350.0
+  },
+  {
+    "type": "digital",
+    "id": "P007",
+    "name": "Office Suite",
+    "price": 199.0,
+    "stock": 500,
+    "download_size": 3200.0
   }
 ]

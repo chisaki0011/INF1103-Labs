@@ -1,48 +1,173 @@
-# UML Class Diagrams - Week 8 OOP Inventory System (Lab 6)
+# UML Class Diagrams - Lab 7 (Inheritance, Overriding and Abstraction)
 
 ## Overview
 
 This document contains the UML class diagrams for the Inventory Management
-System after the Week 8 OOP refactor. The system uses two classes:
+System after the Lab 7 extension. The system now has:
 
-- `Product` - represents and manages **one** product.
-- `Inventory` - manages a **collection** of `Product` objects.
+- `Product` - an **abstract** base class holding the data and behaviour common
+  to every product.
+- `PhysicalProduct` - a subclass that adds a weight and can be shipped.
+- `DigitalProduct` - a subclass that adds a download size.
+- `CanBeShipped` - an **interface-style abstract base class** (a capability
+  contract, not a parent class).
+- `Inventory` - manages a collection of `Product` objects.
 
-File handling and the menu live outside both classes, following the Single
-Responsibility Principle (Lab 6, Sections 2.5 and 2.8).
+File handling and the menu live outside the model classes, following the
+Single Responsibility Principle.
 
 ---
 
-## Class 1: `Product`
+## Class Diagram
+
+```
+                        ┌───────────────────────────────────────┐
+                        │             <<abstract>>              │
+                        │                Product                │
+                        ├───────────────────────────────────────┤
+                        │ - __product_id : str                  │
+                        │ - __name : str                        │
+                        │ - __price : float                     │
+                        │ - __stock : int                       │
+                        ├───────────────────────────────────────┤
+                        │ + __init__(product_id, name, price,   │
+                        │            stock)                     │
+                        │ + update_stock(quantity)              │
+                        │ + display_information() : str         │
+                        │ + get_fulfilment_info() : str         │  <<abstract>>
+                        │ + get_product_type() : str            │
+                        │ + get_product_id() : str              │
+                        │ + get_name() : str                    │
+                        │ + get_price() : float                 │
+                        │ + get_stock() : int                   │
+                        │ + to_dict() : dict                    │
+                        │ + __str__() : str                     │
+                        └───────────────────▲───────────────────┘
+                                            │
+                       ─────────────────────┼─────────────────────
+                        solid line, hollow triangle = inheritance
+                       ─────────────────────┼─────────────────────
+                  ┌─────────────────────────┴─────────────────────────┐
+                  │                                                   │
+┌─────────────────┴──────────────────┐             ┌──────────────────┴─────────────────┐
+│          PhysicalProduct           │             │          DigitalProduct            │
+├────────────────────────────────────┤             ├────────────────────────────────────┤
+│ - __weight : float                 │             │ - __download_size : float          │
+├────────────────────────────────────┤             ├────────────────────────────────────┤
+│ + __init__(product_id, name,       │             │ + __init__(product_id, name,       │
+│            price, stock, weight)   │             │            price, stock,           │
+│ + display_information() : str      │             │            download_size)          │
+│ + get_fulfilment_info() : str      │             │ + display_information() : str      │
+│ + get_weight() : float             │             │ + get_fulfilment_info() : str      │
+│ + calculate_shipping_cost() : float│             │ + get_download_size() : float      │
+│ + to_dict() : dict                 │             │ + to_dict() : dict                 │
+└─────────────────▲──────────────────┘             └────────────────────────────────────┘
+                  ┆
+                  ┆ dashed line, hollow triangle = interface realisation
+                  ┆
+┌─────────────────┴──────────────────┐
+│           <<interface>>            │
+│            CanBeShipped            │
+├────────────────────────────────────┤
+│ + calculate_shipping_cost() : float│  <<abstract>>
+└────────────────────────────────────┘
+
+┌────────────────────────────────────┐
+│             Inventory              │
+├────────────────────────────────────┤
+│ - _products : list[Product]        │
+├────────────────────────────────────┤
+│ + __init__()                       │
+│ + add_product(product) : bool      │
+│ + search_product(product_id)       │
+│ + display_all()                    │
+│ + update_stock_for_product(        │
+│       product_id, new_stock) : bool│
+│ + get_all_products() : list        │
+│ + to_dict_list() : list[dict]      │
+└─────────────────┬──────────────────┘
+                  │ ◆─────── 0..*  (composition)
+                  ▼
+              Product
+```
+
+### Same diagram as Mermaid
+
+```mermaid
+classDiagram
+    class Product {
+        <<abstract>>
+        +str PRODUCT_TYPE
+        -str __product_id
+        -str __name
+        -float __price
+        -int __stock
+        +update_stock(quantity)
+        +display_information() str
+        +get_fulfilment_info()* str
+        +get_product_type() str
+        +get_product_id() str
+        +get_name() str
+        +get_price() float
+        +get_stock() int
+        +to_dict() dict
+    }
+
+    class PhysicalProduct {
+        -float __weight
+        +float BASE_SHIPPING_FEE
+        +float SHIPPING_RATE_PER_KG
+        +display_information() str
+        +get_fulfilment_info() str
+        +get_weight() float
+        +calculate_shipping_cost() float
+        +to_dict() dict
+    }
+
+    class DigitalProduct {
+        -float __download_size
+        +display_information() str
+        +get_fulfilment_info() str
+        +get_download_size() float
+        +to_dict() dict
+    }
+
+    class CanBeShipped {
+        <<interface>>
+        +calculate_shipping_cost()* float
+    }
+
+    class Inventory {
+        -list~Product~ _products
+        +add_product(product) bool
+        +search_product(product_id) Product
+        +display_all()
+        +update_stock_for_product(product_id, new_stock) bool
+        +get_all_products() list
+        +to_dict_list() list
+    }
+
+    Product <|-- PhysicalProduct : inheritance
+    Product <|-- DigitalProduct : inheritance
+    CanBeShipped <|.. PhysicalProduct : realisation
+    Inventory *-- Product : composition
+```
+
+> **Notation:** a solid line with a hollow triangle points from the subclass to
+> the parent (generalisation/inheritance). A dashed line with a hollow triangle
+> points from the implementing class to the interface (realisation).
+> `<<abstract>>` marks an abstract class; `*` marks an abstract method.
+
+---
+
+## Class 1: `Product` (abstract)
 
 ### Summary
 
-Represents a single product in the inventory system with encapsulated
-attributes and state-management methods.
-
-### UML Diagram
-
-```
-┌──────────────────────────────────┐
-│             Product              │
-├──────────────────────────────────┤
-│ - __product_id : str             │
-│ - __name : str                   │
-│ - __price : float                │
-│ - __stock : int                  │
-├──────────────────────────────────┤
-│ + __init__(product_id, name,     │
-│            price, stock)          │
-│ + update_stock(quantity: int)     │
-│ + display_information()           │
-│ + get_product_id() : str          │
-│ + get_name() : str                │
-│ + get_price() : float             │
-│ + get_stock() : int               │
-│ + to_dict() : dict                │
-│ + __str__() : str                 │
-└──────────────────────────────────┘
-```
+Holds everything common to every product: ID, name, price, stock, stock
+updating, the common part of the display, and JSON serialisation. It cannot be
+instantiated because `get_fulfilment_info()` is abstract - every product must
+say how it is delivered.
 
 ### Attributes (private - encapsulation)
 
@@ -52,95 +177,138 @@ attributes and state-management methods.
 | `__name` | `str` | Product name |
 | `__price` | `float` | Product price |
 | `__stock` | `int` | Current stock quantity |
+| `PRODUCT_TYPE` | `str` | Class constant overridden by subclasses (`None` here) |
 
-### Public methods
+### Methods
 
-| Method | Description | Parameters | Returns |
-|--------|-------------|------------|---------|
-| `__init__(product_id, name, price, stock)` | Lab-style constructor. Also accepts a single dictionary (used for JSON loading). | `product_id` (str \| dict), `name` (str), `price` (float), `stock` (int) | None |
-| `update_stock(quantity)` | Sets the stock to `quantity`; rejects negative values. | `quantity` (int) | None |
-| `display_information()` | Prints a formatted product line. | - | `str` |
-| `get_product_id()` | Returns the ID. | - | `str` |
-| `get_name()` | Returns the name. | - | `str` |
-| `get_price()` | Returns the price. | - | `float` |
-| `get_stock()` | Returns the current stock. | - | `int` |
-| `to_dict()` | Returns a JSON-serialisable dictionary. | - | `dict` |
-| `__str__()` | Returns a readable representation. | - | `str` |
+| Method | Abstract? | Description |
+|--------|-----------|-------------|
+| `__init__(product_id, name, price, stock)` | no | Stores the common attributes; accepts positional arguments or a single dictionary |
+| `update_stock(quantity)` | no | Sets the stock; rejects negative values |
+| `display_information()` | no | Prints the common product line |
+| `get_fulfilment_info()` | **yes** | Returns how the product is delivered |
+| `get_product_type()` | no | Returns the `PRODUCT_TYPE` identifier |
+| `get_product_id()` / `get_name()` / `get_price()` / `get_stock()` | no | Encapsulated getters |
+| `to_dict()` | no | Returns the JSON-ready dictionary (includes `type`) |
+| `__str__()` | no | Readable representation |
 
-### Encapsulation
+### Why abstract?
 
-External code never touches the private attributes. For example:
+A generic product would be neither physical nor digital, which the system does
+not allow. Trying to create one gives:
 
-```python
-product.update_stock(50)      # correct - controlled by the class
-product.__stock = 50          # wrong - silently creates a new attribute
-product._Product__stock = 50  # name-mangled escape hatch - do not use
+```
+TypeError: Can't instantiate abstract class Product without an implementation
+for abstract method 'get_fulfilment_info'
 ```
 
 ---
 
-## Class 2: `Inventory`
+## Class 2: `PhysicalProduct`
 
-### Summary
+**Inherits from:** `Product` (solid line, hollow triangle)
+**Realises:** `CanBeShipped` (dashed line, hollow triangle)
 
-Manages a collection of `Product` objects. Delegates file I/O to
-`functions.py` and user interaction to `app.py`.
+| Member | Description |
+|--------|-------------|
+| `__weight` | Weight in kilograms |
+| `display_information()` | Calls `super().display_information()`, then prints weight, fulfilment and shipping cost |
+| `get_fulfilment_info()` | `"Requires physical shipping and handling."` |
+| `get_weight()` | Returns the weight |
+| `calculate_shipping_cost()` | `5.00 + 2.00 × weight`, rounded to cents |
+| `to_dict()` | Calls `super().to_dict()`, then adds `weight` |
 
-### UML Diagram
+---
 
-```
-┌──────────────────────────────────┐
-│            Inventory             │
-├──────────────────────────────────┤
-│ - _products : list[Product]      │
-├──────────────────────────────────┤
-│ + __init__()                     │
-│ + add_product(product) : bool    │
-│ + search_product(product_id)     │
-│ + display_all()                  │
-│ + update_stock_for_product(      │
-│       product_id, new_stock)     │
-│ + get_all_products() : list      │
-│ + to_dict_list() : list[dict]    │
-└──────────────────────────────────┘
-```
+## Class 3: `DigitalProduct`
 
-### Public methods
+**Inherits from:** `Product` (solid line, hollow triangle)
+**Does not implement** `CanBeShipped`.
 
-| Method | Description | Parameters | Returns |
-|--------|-------------|------------|---------|
-| `__init__()` | Creates an empty inventory. | - | None |
-| `add_product(product)` | Adds a `Product` (or dict) after a duplicate-ID check. | `product` (Product \| dict) | `bool` |
-| `search_product(product_id)` | Finds a product by ID. | `product_id` (str) | `Product \| None` |
-| `display_all()` | Displays every product. | - | None |
-| `update_stock_for_product(product_id, new_stock)` | Finds a product and sets its stock. | `product_id` (str), `new_stock` (int) | `bool` |
-| `get_all_products()` | Returns a copy of the product list. | - | `list[Product]` |
-| `to_dict_list()` | Returns the collection as JSON-ready dicts. | - | `list[dict]` |
+| Member | Description |
+|--------|-------------|
+| `__download_size` | Download size in megabytes |
+| `display_information()` | Calls `super().display_information()`, then prints download size and fulfilment |
+| `get_fulfilment_info()` | `"Delivered digitally via download link."` |
+| `get_download_size()` | Returns the download size |
+| `to_dict()` | Calls `super().to_dict()`, then adds `download_size` |
+
+---
+
+## Class 4: `CanBeShipped` (interface)
+
+**Realised by:** `PhysicalProduct`
+
+A pure contract with one abstract method, `calculate_shipping_cost()`. It has
+no attributes and no implementation, so it can be "signed" by any object that
+can be shipped, even one that is not a product. It is deliberately **not** a
+parent of `PhysicalProduct`: a guitar is not "a shipped", it *must be able to*
+be shipped.
+
+---
+
+## Class 5: `Inventory`
+
+Manages a collection of `Product` objects and knows nothing about weights,
+download sizes or shipping. It only calls methods that every product promises
+to provide, so new product types need no change here.
+
+| Method | Description |
+|--------|-------------|
+| `add_product(product)` | Adds a `Product` (or dict, rebuilt by the factory) after a duplicate-ID check |
+| `search_product(product_id)` | Finds a product by ID |
+| `display_all()` | Asks each product to display itself (polymorphism) |
+| `update_stock_for_product(product_id, new_stock)` | Finds a product and delegates to `update_stock()` |
+| `get_all_products()` | Returns a copy of the product list |
+| `to_dict_list()` | Returns the collection as JSON-ready dicts |
 
 ---
 
 ## Module Structure
 
 ```
-┌──────────────┐      ┌──────────────┐      ┌──────────────┐
-│  product.py  │◄────►│ inventory.py │◄────►│ functions.py │
-│  Product     │      │  Inventory   │      │  File I/O    │
-└──────────────┘      └──────────────┘      └──────────────┘
-                             ▲
-                             │ uses
-                             ▼
-                      ┌──────────────┐
-                      │    app.py    │
-                      │ Menu / CLI   │
-                      └──────────────┘
-                             │
-                             ▼
-                      inventory.json
+┌─────────────────────┐
+│      product.py     │  Product (abstract)
+└──────────┬──────────┘
+           │
+     ┌─────┴───────────────────┐
+     ▼                         ▼
+┌──────────────────┐   ┌──────────────────┐
+│ physical_product │   │ digital_product  │
+│ PhysicalProduct  │   │ DigitalProduct   │
+└────────┬─────────┘   └────────┬─────────┘
+         │ implements           │
+         ▼                      │
+┌──────────────────┐            │
+│  can_be_shipped  │            │
+│   CanBeShipped   │            │
+└──────────────────┘            │
+                                │
+     ┌──────────────────────────┘
+     ▼
+┌──────────────────┐     ┌──────────────────┐
+│ product_factory  │────►│    inventory.py  │
+│ create_product() │     │     Inventory    │
+└──────────────────┘     └────────┬─────────┘
+                                  │
+                     ┌────────────┴────────────┐
+                     ▼                         ▼
+              ┌──────────────┐          ┌──────────────┐
+              │ functions.py │          │    app.py    │
+              │   File I/O   │          │  Menu / CLI  │
+              └──────────────┘          └──────────────┘
+                     │
+                     ▼
+              inventory.json
 ```
 
 | Module | Responsibility |
 |--------|----------------|
-| `product.py` | Stores product information and manages its own state |
+| `product.py` | Abstract base: common product data and behaviour |
+| `physical_product.py` | Physical products: weight, shipping cost |
+| `digital_product.py` | Digital products: download size |
+| `can_be_shipped.py` | Shipping capability contract |
+| `product_factory.py` | Rebuilds the right subclass from stored data |
 | `inventory.py` | Stores, adds, searches and displays products |
 | `functions.py` | Loads and saves `inventory.json`; input helpers |
 | `app.py` | Displays the menu, gets user input, calls Inventory methods |
@@ -149,89 +317,93 @@ Manages a collection of `Product` objects. Delegates file I/O to
 
 ## Relationships
 
-### Composition (strong)
+| Relationship | Notation | Where |
+|--------------|----------|-------|
+| Inheritance | solid line + hollow triangle | `PhysicalProduct` and `DigitalProduct` → `Product` |
+| Interface realisation | dashed line + hollow triangle | `PhysicalProduct` → `CanBeShipped` |
+| Composition | filled diamond | `Inventory` ◆—— `Product` (0..*) |
+| Dependency | dashed arrow | `Inventory` → `product_factory`, `app.py` → model classes, `functions.py` → factory |
 
-- An `Inventory` **contains** multiple `Product` objects.
-- Products are created in `app.py` or by `Inventory.add_product()` when loading
-  from JSON, then stored in `Inventory._products`.
-- A product only exists as part of the inventory collection.
-
-### Dependency
-
-- `Inventory` depends on `Product`.
-- `functions.save_inventory()` depends on `Product.to_dict()` (via duck typing).
-- `app.py` depends on `Inventory`, `Product` and `functions`.
-
----
-
-## Usage Flow Example (matches Lab 6, Sections 2.6 and 2.7)
-
-```python
-from product import Product
-from inventory import Inventory
-
-# 1. Create the inventory object
-inventory = Inventory()
-
-# 2. Create Product objects - lab-style constructor
-product1 = Product("P001", "Laptop", 1200.00, 15)
-product2 = Product("P002", "Mouse", 25.50, 40)
-
-# 3. Pass the objects to the Inventory
-inventory.add_product(product1)
-inventory.add_product(product2)
-
-# 4. Display, search, update
-inventory.display_all()
-product = inventory.search_product("P001")
-if product:
-    product.display_information()
-
-inventory.update_stock_for_product("P001", 20)
-
-# 5. Save through the file-handling module
-import functions as fn
-fn.save_inventory(inventory)
-```
+- `PhysicalProduct` uses **single class inheritance** (`Product`) plus **one
+  interface** (`CanBeShipped`). `DigitalProduct` only inherits `Product`.
+- The `Inventory` stores objects through the abstract `Product` type, which is
+  what allows both subclasses to be handled by the same code.
 
 ---
 
 ## Design Principles Applied
 
+### Open/Closed Principle (OCP)
+
+`Product` is closed for modification and open for extension. Adding a new
+product type means adding a subclass, a `PRODUCT_CLASSES` entry in
+`product_factory.py`, and an input prompt - the abstract base, `Inventory`,
+`functions.py` and the existing product classes stay untouched.
+
 ### Single Responsibility Principle (SRP)
 
-- **Product** - only represents/manages one product.
-- **Inventory** - only manages the collection of products.
-- **functions** - only handles file I/O and input/display helpers.
-- **app.py** - only handles the menu and user flow.
+- `Product` - common product data/state.
+- `PhysicalProduct` / `DigitalProduct` - their own type-specific data.
+- `CanBeShipped` - only the shipping contract.
+- `Inventory` - only the collection.
+- `product_factory` - only object construction from stored data.
+- `functions.py` - only file I/O, prompts and display helpers.
+- `app.py` - only the menu and user flow.
 
 ### Encapsulation
 
-- `Product` uses private attributes (`__product_id`, `__name`, `__price`, `__stock`).
-- `Inventory` uses a private collection (`_products`).
-- Access is only through public methods/getters; `to_dict()` is the only
-  controlled way to serialise a product.
+All attributes use the `__` prefix and are only reachable through public
+methods. Subclasses never touch the parent's private fields; they use getters
+and `super()`.
 
-### Separation of Concerns
+### Reuse over duplication
 
-- Data layer: `Product`
-- Collection layer: `Inventory`
-- Persistence layer: `functions`
-- Presentation/orchestration layer: `app.py`
+Both subclasses call `super().__init__()`, `super().display_information()` and
+`super().to_dict()`, so the common product fields are defined once.
 
 ---
 
-## Lab 6 Requirement Checklist
+## Usage Flow Example
+
+```python
+from inventory import Inventory
+from physical_product import PhysicalProduct
+from digital_product import DigitalProduct
+import functions as fn
+
+inventory = Inventory()
+inventory.add_product(PhysicalProduct("P010", "Guitar", 899.00, 3, 4.5))
+inventory.add_product(DigitalProduct("P011", "Photo Editor", 49.90, 999, 1200))
+
+inventory.display_all()
+
+guitar = inventory.search_product("P010")
+print(guitar.get_fulfilment_info())        # physical shipping message
+print(guitar.calculate_shipping_cost())    # 14.0
+
+editor = inventory.search_product("P011")
+print(editor.get_fulfilment_info())        # digital delivery message
+
+fn.save_inventory(inventory)               # writes type + extra fields
+```
+
+---
+
+## Lab 7 Requirement Checklist
 
 | Requirement | Location |
 |-------------|----------|
-| Product class with four private attributes | `product.py` |
-| `__init__` constructor | `product.py` |
-| `update_stock(quantity)` | `product.py` |
-| `display_information()` | `product.py` |
-| Encapsulation via `__` attributes and getters | `product.py` |
-| Product has no file I/O, menu or input code | `product.py` |
-| Inventory class holding Product objects | `inventory.py` |
-| `add_product()`, `search_product()`, `display_all()` | `inventory.py` |
-| Program refactored from dicts to objects | `app.py` |
-| All six menu options | `app.py` |
+| `PhysicalProduct` inherits `Product` and reuses `super().__init__()` | `physical_product.py` |
+| `weight` attribute and overridden `display_information()` | `physical_product.py` |
+| `DigitalProduct` inherits `Product` and reuses `super().__init__()` | `digital_product.py` |
+| `download_size` attribute and overridden `display_information()` | `digital_product.py` |
+| Both overrides call `super().display_information()` | `physical_product.py`, `digital_product.py` |
+| `Product` inherits `ABC` and declares `@abstractmethod get_fulfilment_info()` | `product.py` |
+| Both subclasses implement `get_fulfilment_info()` | both product modules |
+| `Product` cannot be instantiated | verified by `test_products.py` |
+| `CanBeShipped` interface with `calculate_shipping_cost()` | `can_be_shipped.py` |
+| `PhysicalProduct` implements the interface, `DigitalProduct` does not | `physical_product.py` |
+| Single class inheritance + interface only | `PhysicalProduct(Product, CanBeShipped)` |
+| System supports both types in every menu option | `app.py`, `inventory.py` |
+| JSON stores `type` and the extra attributes | `product.to_dict()`, `inventory.json` |
+| Loading rebuilds the correct subclass | `product_factory.py` |

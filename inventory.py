@@ -1,25 +1,33 @@
 """
-Inventory Module - Week 8 OOP Refactor (Lab 6)
-================================================
+Inventory Module - Lab 7 (Inheritance, Overriding and Abstraction)
+==================================================================
 
 This module handles the INVENTORY (collection of products) using Object-Oriented
 Programming. The Inventory class has ONE responsibility: manage a collection of
 Product objects.
 
-According to the lab brief (Section 2.8), the Inventory class should NOT:
+The Inventory works with the abstract Product type, so it does not know or care
+whether a product is physical or digital. It only calls the public methods that
+every product promises to provide (get_product_id(), display_information(),
+to_dict(), ...). New product types can therefore be added without changing this
+class (polymorphism + Open/Closed Principle).
+
+According to the lab brief, the Inventory class should NOT:
 - Load or save files
 - Display the main menu
 - Ask users for input
-- Handle individual product data/state
+- Handle individual product data/state (including weight or download size)
 
 These responsibilities are handled by other modules instead:
 - functions.py handles file I/O operations
 - app.py handles the main menu and user interaction
-- product.py handles individual product data/state
+- product.py / physical_product.py / digital_product.py handle product data
+- product_factory.py rebuilds the right subclass when loading JSON
 """
 
 
 from product import Product
+from product_factory import create_product
 
 
 class Inventory:
@@ -31,7 +39,7 @@ class Inventory:
 
     Example usage:
         >>> inv = Inventory()
-        >>> product = Product("P001", "Laptop", 999.0, 5)
+        >>> product = PhysicalProduct("P001", "Laptop", 999.0, 5, 2.2)
         >>> inv.add_product(product)
         >>> inv.search_product("P001")
     """
@@ -55,10 +63,13 @@ class Inventory:
 
         Raises:
             TypeError: If the argument is neither a Product nor a dictionary.
+            ValueError: If the dictionary has an unknown product type or is
+                missing the attributes required by that type.
         """
-        # Accept a dictionary for convenience when loading from JSON
+        # Accept a dictionary for convenience when loading from JSON.
+        # The factory picks PhysicalProduct or DigitalProduct from the 'type'.
         if isinstance(product, dict):
-            product = Product(product)
+            product = create_product(product)
 
         if not isinstance(product, Product):
             raise TypeError(
@@ -98,16 +109,22 @@ class Inventory:
         return None
 
     def display_all(self):
-        """Display all products in the inventory."""
+        """
+        Display all products in the inventory.
+
+        Each product displays itself through its own overridden
+        display_information(), so physical and digital products print their
+        own details without the Inventory knowing the difference.
+        """
         if len(self._products) == 0:
             print("Inventory is empty.")
             return
 
         print("Current Inventory")
-        print("-" * 48)
+        print("-" * 60)
         for product in self._products:
             product.display_information()
-        print("-" * 48)
+        print("-" * 60)
 
     def update_stock_for_product(self, product_id, new_stock):
         """

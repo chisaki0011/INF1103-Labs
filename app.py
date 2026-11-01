@@ -1,24 +1,29 @@
 """
-Inventory Management System - Main Application (Week 8 OOP Refactor)
-======================================================================
+Inventory Management System - Main Application (Lab 7)
+======================================================
 
 This is the main application entry point that ties everything together.
 
 Architecture:
-- product.py       : Handles individual product data/state (encapsulation)
-- inventory.py     : Handles collection of products (inventory management)
-- functions.py     : File I/O, input validation, display operations
-- app.py           : Main CLI menu and user interaction flow
+- product.py           : abstract Product base class (common data/state)
+- physical_product.py  : PhysicalProduct - adds weight, can be shipped
+- digital_product.py   : DigitalProduct - adds download size
+- can_be_shipped.py    : CanBeShipped interface (shipping contract)
+- product_factory.py   : rebuilds the right subclass when loading JSON
+- inventory.py         : handles the collection of products
+- functions.py         : file I/O, input validation, display operations
+- app.py               : main CLI menu and user interaction flow
 
 According to the Single Responsibility Principle and Separation of Concerns:
-- Product class ONLY manages its own data/state
-- Inventory class manages the collection of Product objects
+- Product classes ONLY manage their own data/state
+- Inventory manages the collection of Product objects
 - Helper functions handle file I/O, prompts, and displays
 - This app.py module handles the main menu and orchestrates everything
 """
 
-from product import Product
+from digital_product import DigitalProduct
 from inventory import Inventory
+from physical_product import PhysicalProduct
 import functions as fn
 
 
@@ -33,8 +38,13 @@ def main():
 
     if loaded_products:
         for product_dict in loaded_products:
-            # add_product() creates a Product and checks for duplicate IDs
-            inventory.add_product(product_dict)
+            # add_product() rebuilds the right subclass from the 'type' field
+            # and checks for duplicate IDs. A corrupt record is skipped so one
+            # bad entry cannot stop the whole system from starting.
+            try:
+                inventory.add_product(product_dict)
+            except (TypeError, ValueError, KeyError) as error:
+                print(f"Warning: skipping invalid product record ({error}).")
 
     print("Welcome to the Inventory Management System!")
     print("=" * 50)
@@ -91,7 +101,12 @@ def option_1_display_all(inventory):
 
 
 def option_2_add_product(inventory):
-    """Handle menu option 2: Add New Product."""
+    """Handle menu option 2: Add New Product.
+
+    The user chooses between a physical and a digital product, then enters
+    the extra information that product type requires. The correct subclass
+    is created here, so Inventory never needs to know the difference.
+    """
     print("\n--- Add New Product ---\n")
 
     product_id = input("Enter Product ID: ").strip()
@@ -106,28 +121,28 @@ def option_2_add_product(inventory):
         input("Press Enter to continue...")
         return
 
-    try:
-        price_str = input("Enter Price (e.g., 99.99): ").strip()
-        price = float(price_str)
-        if price < 0:
-            raise ValueError
-    except ValueError:
-        print("\nError: Invalid price format.")
+    # Shared attributes - validated helpers from functions.py
+    price = fn.get_valid_price()
+    stock = fn.get_valid_stock()
+
+    print("\nProduct type:")
+    print("  1. Physical product (has a weight and can be shipped)")
+    print("  2. Digital product (has a download size)")
+    type_choice = input("Choose type (1 or 2): ").strip()
+
+    if type_choice == "1":
+        weight = fn.get_valid_weight()
+        product = PhysicalProduct(product_id, name, price, stock, weight)
+
+    elif type_choice == "2":
+        download_size = fn.get_valid_download_size()
+        product = DigitalProduct(product_id, name, price, stock, download_size)
+
+    else:
+        print("\nError: Invalid product type. Please choose 1 or 2.")
         input("Press Enter to continue...")
         return
 
-    try:
-        stock_str = input("Enter Stock Quantity: ").strip()
-        stock = int(stock_str)
-        if stock < 0:
-            raise ValueError
-    except ValueError:
-        print("\nError: Invalid stock quantity.")
-        input("Press Enter to continue...")
-        return
-
-    # Create a Product object and let Inventory manage it (Lab 6, Section 2.7)
-    product = Product(product_id, name, price, stock)
     inventory.add_product(product)
 
     input("\nPress Enter to continue...")
