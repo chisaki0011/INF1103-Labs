@@ -1,330 +1,263 @@
-# Week 5: OOP Inventory System Refactor
+# INF1103 Inventory Management System
 
-## Overview
+This repository contains the Week 5 (functional) inventory system and its
+Week 8 (object-oriented) refactor.
 
-This is a refactored inventory management system using **Object-Oriented Programming (OOP)** principles and proper separation of concerns.
-
-### Key Principles Applied
-
-- **Encapsulation**: Product class uses private attributes (`__product_id`, `__name`, `__price`, `__stock`)
-- **Single Responsibility Principle (SRP)**: Each module has one clear purpose
-- **Separation of Concerns**: Data/state, logic, and UI are separated into different modules
+- **Week 5 / Lab 5** - dictionaries, functions and JSON persistence.
+- **Week 8 / Lab 6** - the same system refactored into `Product` and
+  `Inventory` classes using encapsulation and the Single Responsibility
+  Principle.
 
 ---
 
-## File Architecture
+## Project Structure
 
 ```
 INF1103-Labs/
-├── app.py              # Main CLI entry point - handles menu flow
-├── product.py          # Product class - manages data/state only
-├── functions.py        # Helper functions - file I/O, validation, display
-├── inventory.json      # Data file (auto-created on first run)
-├── README.md           # This file
-└── .gitignore         # Ignores deprecated files (*.pyc, __pycache__, *.bak)
+├── app.py                 # Week 8 OOP entry point - menu and user flow
+├── product.py             # Product class - one product's data/state
+├── inventory.py           # Inventory class - collection of Product objects
+├── functions.py           # File I/O (load/save) and input/display helpers
+├── inventory.json         # Persistent inventory data (4 products)
+├── inventory_manager.py   # Week 5 functional entry point (legacy)
+├── persistent_auditor.py  # Week 5 functions (load/save/CRUD) (legacy)
+├── Dockerfile             # Container image definition
+├── uml-diagrams.md        # UML class diagrams for Product and Inventory
+├── reflection.md          # Answers to the Lab 6 reflection questions
+├── log.txt                # Git history for submission
+└── README.md              # This file
 ```
 
----
-
-## Module Responsibilities
-
-### 1. `product.py` - Product Class (Encapsulation)
-
-**Responsibility**: Manage individual product data and state ONLY.
-
-**Key Features**:
-- Private attributes using `__prefix` convention
-- Getter methods for each attribute (`get_product_id()`, `get_name()`, etc.)
-- `update_stock()` method to modify stock quantity
-- `display_information()` to show formatted product details
-- **Accepts dict parameter in `__init__`** for data initialization
-
-```python
-class Product:
-    def __init__(self, data: dict):
-        """Initialize with dict containing id, name, price, stock."""
-        self.__product_id = data["id"]
-        self.__name = data["name"]
-        self.__price = data["price"]
-        self.__stock = data["stock"]
-    
-    def get_product_id(self):  return self.__product_id
-    # ... other getters ...
-    
-    def update_stock(self, quantity):  # Adds to current stock
-        self.__stock += quantity
-    
-    def display_information(self):
-        print(f"ID: {self.__product_id} | Name: {self.__name} ...")
-```
-
-**IMPORTANT**: Product class does NOT handle input prompts or file I/O.
+> `auditor.py`, `modular_auditor.py`, `old_persistent_auditor.py` and
+> `hello.py` are earlier-week files kept for history but ignored by git
+> (see `.gitignore`).
 
 ---
 
-### 2. `functions.py` - Helper Functions (File I/O & Validation)
+## Running the Week 8 OOP System
 
-**Responsibility**: Handle all file operations, input validation, and display functions.
+No third-party packages are required (Python 3.6+).
 
-**Key Functions**:
-
-| Function | Purpose |
-|----------|---------|
-| `load_inventory(filename)` | Load inventory from JSON file |
-| `save_inventory(inventory, filename)` | Save inventory to JSON file |
-| `display_all(inventory)` | Display all products |
-| `find_product_by_id(inventory, product_id)` | Find product by ID |
-| `search_product(inventory, search_term)` | Search products by name |
-| `get_valid_price()` | Prompt for valid price (>= 0) |
-| `get_valid_stock()` | Prompt for valid stock quantity (>= 0) |
-| `get_valid_product_id(inventory)` | Get validated product ID from user |
-| `add_product(inventory)` | Add new product to inventory |
-| `update_stock(product_id, inventory)` | Update stock via Product class |
-
----
-
-### 3. `app.py` - Main Application (CLI Menu)
-
-**Responsibility**: Handle main CLI menu flow and orchestrate operations.
-
-**Key Features**:
-- Loads inventory using `fn.load_inventory()`
-- Displays menu repeatedly until exit
-- Processes user input for each option
-- Uses Product class via `from product import Product`
-- Imports ALL helper functions from `functions.py` as alias `fn`
-
----
-
-## Setup Instructions
-
-### Prerequisites
-
-- Python 3.6 or higher (no external packages required)
-
-### Running the Application
-
-1. **Start the system**:
-   ```bash
-   python app.py
-   ```
-
-2. **Menu options**:
-   ```
-   ----------- MENU -----------
-   1. Display All Products
-   2. Add Product
-   3. Update Stock
-   4. Search Product
-   5. Save Inventory
-   6. Exit
-   ----------------------------
-   ```
-
-### Example Usage
-
-#### Adding a New Product
 ```bash
-$ python app.py
-=============================================
-INVENTORY MANAGEMENT SYSTEM
-=============================================
+python app.py
+```
+
+Menu:
+
+```
 ----------- MENU -----------
 1. Display All Products
 2. Add Product
 3. Update Stock
 4. Search Product
 5. Save Inventory
-6. Exit
-----------------------------
-Enter option: 2
-Add new product? (y/n): y
-Enter product ID (e.g., P003): P003
-Enter product name: Wireless Mouse
-Enter price (must be >= 0): 29.99
-Enter stock quantity (must be >= 0): 100
-
-Product 'Wireless Mouse' (ID: P003) added successfully!
-Inventory saved successfully.
+6. Exit (auto-save)
+q - Quit without saving
+===========================
 ```
 
-#### Updating Stock
-```bash
-$ python app.py
------------ MENU -----------
+- Options **1-5** perform the operation and return to the menu.
+- Option **6** saves `inventory.json` and exits.
+- `q` exits **without** saving.
+
+### Example session
+
+```
+inventory.json found.
+Inventory loaded successfully.
+Welcome to the Inventory Management System!
 ...
-Enter option: 3
+Enter your choice (1-6 or 'q' to quit): 1
 
---- UPDATE STOCK ---
-Available Product IDs:
-  - P001 (Laptop)
-  - P002 (Mouse)
-  - P003 (Wireless Mouse)
-
-Enter product ID to update: P003
-Current stock for 'Wireless Mouse': 100
-Enter stock quantity (must be >= 0): 50
-Stock updated from 100 to 150
+Current Inventory
+------------------------------------------------
+ID: P001 | Name: Laptop | Price: $1200.00 | Stock: 15
+ID: P002 | Name: Mouse | Price: $25.50 | Stock: 40
+ID: P003 | Name: Keyboard | Price: $45.00 | Stock: 25
+ID: P004 | Name: Earpiece | Price: $29.90 | Stock: 100
+------------------------------------------------
 ```
+
+---
+
+## Running the Week 5 Functional System (Legacy)
+
+```bash
+python inventory_manager.py
+```
+
+This uses `persistent_auditor.py` and the Week 5 dictionary/list design.
+
+---
+
+## Class Design (Week 8)
+
+### `Product` (`product.py`)
+
+Responsible for **one** product only.
+
+```python
+class Product:
+    def __init__(self, product_id, name=None, price=None, stock=None):
+        # Accepts Product("P001", "Laptop", 1200.0, 15)
+        # or Product({"id": "P001", "name": "Laptop", ...}) when loading JSON
+        ...
+
+    def update_stock(self, quantity): ...
+    def display_information(self): ...
+    def get_product_id(self): ...
+    def get_name(self): ...
+    def get_price(self): ...
+    def get_stock(self): ...
+    def to_dict(self): ...
+```
+
+Private attributes (`__product_id`, `__name`, `__price`, `__stock`) are only
+changed through `update_stock()`. The class contains **no** file I/O, menu or
+`input()` code.
+
+### `Inventory` (`inventory.py`)
+
+Responsible for a **collection** of `Product` objects.
+
+```python
+class Inventory:
+    def __init__(self): ...
+    def add_product(self, product): ...          # accepts Product or dict
+    def search_product(self, product_id): ...
+    def display_all(self): ...
+    def update_stock_for_product(self, product_id, new_stock): ...
+    def get_all_products(self): ...
+    def to_dict_list(self): ...
+```
+
+### `functions.py`
+
+Handles persistence and input helpers:
+
+| Function | Purpose |
+|----------|---------|
+| `load_inventory(filename)` | Load JSON and return a list of dictionaries |
+| `save_inventory(inventory, filename)` | Save an `Inventory` object or list of products |
+| `display_all(inventory)` | Display products (objects or dictionaries) |
+| `get_valid_price()` / `get_valid_stock()` | Validated prompts |
+
+### `app.py`
+
+Displays the menu, reads user input and calls `Inventory` methods. It never
+touches a product's private attributes.
+
+See `uml-diagrams.md` for the full UML diagrams.
 
 ---
 
 ## Data Format
 
-### `inventory.json` Structure
+`inventory.json` is a list of product dictionaries:
 
 ```json
 [
-  {
-    "id": "P001",
-    "name": "Laptop",
-    "price": 999.99,
-    "stock": 10
-  },
-  {
-    "id": "P002",
-    "name": "Mouse",
-    "price": 25.50,
-    "stock": 50
-  }
+  { "id": "P001", "name": "Laptop",   "price": 1200.0, "stock": 15 },
+  { "id": "P002", "name": "Mouse",    "price": 25.5,   "stock": 40 },
+  { "id": "P003", "name": "Keyboard", "price": 45.0,   "stock": 25 },
+  { "id": "P004", "name": "Earpiece", "price": 29.9,   "stock": 100 }
 ]
 ```
 
-**Notes**:
-- Created automatically on first run if not exists
-- Empty list `[]` if file doesn't exist yet
-- All prices stored as floats (JSON converts)
-- Stock quantities stored as integers
+If the file is missing or invalid, the program starts with an empty inventory.
 
 ---
 
-## Class Diagrams
+## Docker
 
-### Product Class Architecture
-
-```
-┌─────────────────────────────────┐
-│       Product Class             │
-├─────────────────────────────────┤
-│  __private_attr (encapsulated)  │
-│  - __product_id                 │
-│  - __name                       │
-│  - __price                      │
-│  - __stock                      │
-├─────────────────────────────────┤
-│  + get_product_id() -> str      │
-│  + get_name() -> str            │
-│  + get_price() -> float         │
-│  + get_stock() -> int           │
-│                                 │
-│  - update_stock(quantity)       │
-│  - display_information()        │
-└─────────────────────────────────┘
-
-Note: Accepts dict parameter in __init__:
-      { "id": "...", "name": "...", 
-         "price": ..., "stock": ... }
-```
-
-### System Architecture
-
-```
-┌─────────────┐      ┌──────────────┐      ┌──────────────┐
-│    User     │      │  app.py      │      │ functions.py  │
-└──────┬──────┘      └──────┬───────┘      └──────┬────────┘
-       │                    │                     │
-       │ Menu Display      │ Load/Save           │ File I/O
-       │ User Input        │ Display All         │ Validation
-       └──────────────────>│                   │
-                           │ Product Ops        │ Search
-                           └──────────────────> │ CRUD
-                                               │
-┌─────────────┐                    ┌────────────────────────┐
-│ product.py  │◄─── Encapsulation │     inventory.json      │
-├─────────────┤                    │                         │
-│ - __product_id              └────────────────────────┘
-│ - __name                     (Data file)
-│ - __price
-│ - __stock
-
-Single Responsibility Principle Applied:
-- Product: ONLY manages its own data/state
-- Functions: Handles all I/O, prompts, validation
-- App: Handles main menu flow
-```
-
----
-
-## Deprecated Files
-
-The following files have been refactored and should be ignored:
-
-| File | Status | Reason |
-|------|--------|--------|
-| `inventory_manager.py` | Deprecated | Refactored into `app.py` |
-| `modular_auditor.py` | Deprecated | Functions extracted to `functions.py` |
-| `old_persistent_audior.py` | Deprecated | Old implementation, replaced |
-| `auditor.py` | Deprecated | Functions moved to `functions.py` |
-
----
-
-## Testing the Refactor
-
-Run these commands to verify the system works:
+Build the image (only needed when the `Dockerfile` or dependencies change):
 
 ```bash
-# Test with empty inventory (starts fresh)
-python app.py
+docker build -t inf1103-labs-smart-auditor .
+```
 
-# Add a test product
-echo "6" | python app.py  # Exit after menu display
+Run the Week 8 OOP system with a volume mount so `inventory.json` persists on
+the host:
 
-# Or use a simple test script
+```bash
+docker run --rm -it -v "${PWD}:/app" -w /app inf1103-labs-smart-auditor
+```
+
+Run the Week 5 functional system instead:
+
+```bash
+docker run --rm -it -v "${PWD}:/app" -w /app inf1103-labs-smart-auditor python inventory_manager.py
+```
+
+The volume mount means you can edit the Python files locally and re-run the
+container without rebuilding the image.
+
+---
+
+## Testing Checklist
+
+| Menu option | Verified behaviour |
+|-------------|--------------------|
+| 1 - Display All Products | Loads `inventory.json` and prints every product |
+| 2 - Add Product | Creates a `Product` object; duplicate IDs are rejected |
+| 3 - Update Stock | Sets the new stock through `Product.update_stock()` |
+| 4 - Search Product | Finds by ID and prints the product details |
+| 5 - Save Inventory | Writes `inventory.json` via `functions.save_inventory()` |
+| 6 - Exit | Saves and exits cleanly |
+| q - Quit | Exits without saving |
+
+Quick smoke test (no interactive input):
+
+```bash
 python -c "
 from product import Product
-p = Product({'id': 'P001', 'name': 'Test', 'price': 9.99, 'stock': 5})
-print(f'Product: {p.display_information()}')
+from inventory import Inventory
+inv = Inventory()
+inv.add_product(Product('P001', 'Laptop', 1200.00, 15))
+inv.add_product(Product('P002', 'Mouse', 25.50, 40))
+inv.display_all()
+inv.update_stock_for_product('P001', 20)
+print(inv.search_product('P099'))
+import functions as fn
+fn.save_inventory(inv)
 "
 ```
 
 ---
 
+## Submission Checklist
+
+### Week 5 / Lab 5
+
+- [x] `inventory_manager.py` - functional entry point
+- [x] `inventory.json` - updated data file (4 products)
+- [x] `log.txt` - git history (`git log > log.txt`)
+- [x] `Dockerfile` - image definition
+- [ ] Screenshot of `docker build` output *(student to capture)*
+- [ ] Screenshot of the program running in Docker with input/output *(student to capture)*
+
+### Week 8 / Lab 6
+
+- [x] `product.py` - Product class with encapsulated attributes
+- [x] `inventory.py` - Inventory class managing Product objects
+- [x] `app.py` - refactored menu using objects
+- [x] `functions.py` - file load/save
+- [x] `inventory.json` - updated data file
+- [x] `uml-diagrams.md` - UML for all classes
+- [x] `reflection.md` - reflection question answers
+- [x] `log.txt` - git history
+- [ ] Screenshot of the Docker container running *(student to capture)*
+- [ ] Screenshot of the program accepting input and producing output *(student to capture)*
+
+Package the files into one folder, zip it, and upload to xSite.
+
+---
+
 ## Git Workflow
 
-### Adding New Files
-
 ```bash
-# Add all new files to git
-git add app.py product.py functions.py README.md .gitignore
-
-# Commit the refactoring
-git commit -m "Week 5: Refactor to OOP with separation of concerns
-
-- Created Product class with encapsulated attributes
-- Moved helper functions to separate functions.py module
-- Refactored inventory_manager.py into app.py (CLI entry point)
-- Added .gitignore for deprecated files (.pyc, __pycache__, *.bak)
-- Updated README.md with architecture documentation"
-
-# Push to remote repository
+git add .
+git commit -m "Week 8: OOP refactor with Product and Inventory classes"
 git push origin main
+git log > log.txt
 ```
-
----
-
-## Best Practices Followed
-
-1. **Encapsulation**: All attributes prefixed with `__` in Product class
-2. **Single Responsibility Principle**: Each module has one clear purpose
-3. **Separation of Concerns**: Data, logic, and UI separated
-4. **Beginner-friendly comments**: Added throughout code
-5. **Type hints**: Used where appropriate for clarity
-
----
-
-## Next Steps
-
-- Test the system with various inputs
-- Add unit tests for Product class methods
-- Consider adding input validation at app level
-- Document all edge cases in README.md

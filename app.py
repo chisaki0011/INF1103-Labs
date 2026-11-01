@@ -1,5 +1,5 @@
 """
-Inventory Management System - Main Application (Week 5 OOP Refactor)
+Inventory Management System - Main Application (Week 8 OOP Refactor)
 ======================================================================
 
 This is the main application entry point that ties everything together.
@@ -10,7 +10,7 @@ Architecture:
 - functions.py     : File I/O, input validation, display operations
 - app.py           : Main CLI menu and user interaction flow
 
-According to Single Responsibility Principle and Separation of Concerns:
+According to the Single Responsibility Principle and Separation of Concerns:
 - Product class ONLY manages its own data/state
 - Inventory class manages the collection of Product objects
 - Helper functions handle file I/O, prompts, and displays
@@ -24,60 +24,68 @@ import functions as fn
 
 def main():
     """Main entry point for the application."""
-    
+
     # Instantiate Inventory object (manages collection of Product objects)
     inventory = Inventory()
-    
-    # Load existing inventory from file if exists
+
+    # Load existing inventory from file if it exists
     loaded_products = fn.load_inventory()
-    
+
     if loaded_products:
         for product_dict in loaded_products:
-            # Add each product to Inventory - duplicate checking is handled by Inventory.add_product()
-            inventory.add_product(product_dict)  # add_product checks for duplicates
-    
+            # add_product() creates a Product and checks for duplicate IDs
+            inventory.add_product(product_dict)
+
     print("Welcome to the Inventory Management System!")
     print("=" * 50)
-    
+
     while True:
         display_menu()
-        
+
         choice = input("Enter your choice (1-6 or 'q' to quit): ").strip()
-        
+
         if choice.lower() == 'q':
-            # Save inventory before exiting
-            success = fn.save_inventory(inventory)
-            if success:
-                print("\nInventory saved successfully!")
-            else:
-                print("\nWarning: Could not save inventory. Data may be lost!")
-            
+            # Quit without saving (menu option 'q')
+            print("\nQuitting without saving.")
             print("\nThank you for using Inventory Management System.")
             print("=" * 50 + "\n")
             break
-        
+
         # Handle menu options by calling Inventory object methods
         if choice == '1':
             option_1_display_all(inventory)
-            
+
         elif choice == '2':
             option_2_add_product(inventory)
-            
+
         elif choice == '3':
             option_3_update_stock(inventory)
-            
+
         elif choice == '4':
             option_4_search(inventory)
-            
+
         elif choice == '5':
             option_5_save_inventory(inventory)
-            
+
+        elif choice == '6':
+            # Exit and auto-save
+            print("\nSaving inventory before exit...")
+            if fn.save_inventory(inventory):
+                print("Inventory saved successfully.")
+            else:
+                print("Warning: Could not save inventory. Data may be lost!")
+
+            print("\nThank you for using Inventory Management System.")
+            print("=" * 50 + "\n")
+            break
+
         else:
-            print("\nInvalid choice! Please enter a number between 1-6.\n")
+            print("\nInvalid choice! Please enter a number between 1-6 or 'q'.")
 
 
 def option_1_display_all(inventory):
     """Handle menu option 1: Display All Products."""
+    print()
     inventory.display_all()
     input("\nPress Enter to continue...")
 
@@ -85,96 +93,102 @@ def option_1_display_all(inventory):
 def option_2_add_product(inventory):
     """Handle menu option 2: Add New Product."""
     print("\n--- Add New Product ---\n")
-    
+
     product_id = input("Enter Product ID: ").strip()
+    if not product_id:
+        print("\nError: Product ID cannot be empty.")
+        input("Press Enter to continue...")
+        return
+
     name = input("Enter Product Name: ").strip()
+    if not name:
+        print("\nError: Product name cannot be empty.")
+        input("Press Enter to continue...")
+        return
+
     try:
         price_str = input("Enter Price (e.g., 99.99): ").strip()
         price = float(price_str)
+        if price < 0:
+            raise ValueError
     except ValueError:
         print("\nError: Invalid price format.")
         input("Press Enter to continue...")
         return
-    
+
     try:
         stock_str = input("Enter Stock Quantity: ").strip()
         stock = int(stock_str)
+        if stock < 0:
+            raise ValueError
     except ValueError:
         print("\nError: Invalid stock quantity.")
         input("Press Enter to continue...")
         return
-    
-    # Create dictionary for Product initialization
-    product_dict = {
-        'id': product_id,
-        'name': name,
-        'price': price,
-        'stock': stock
-    }
-    
-    # Add product through Inventory object (which validates and checks duplicates)
-    success = inventory.add_product(product_dict)
-    
-    if success:
-        input("\nPress Enter to continue...")
+
+    # Create a Product object and let Inventory manage it (Lab 6, Section 2.7)
+    product = Product(product_id, name, price, stock)
+    inventory.add_product(product)
+
+    input("\nPress Enter to continue...")
 
 
 def option_3_update_stock(inventory):
     """Handle menu option 3: Update Stock for Product."""
     print("\n--- Update Stock ---\n")
-    
+
     product_id = input("Enter Product ID: ").strip()
-    
+
     if inventory.search_product(product_id) is None:
         input("Press Enter to continue...")
         return
-    
+
     try:
-        quantity_str = input("Enter quantity to add: ").strip()
-        quantity = int(quantity_str)
+        stock_str = input("Enter new stock quantity: ").strip()
+        new_stock = int(stock_str)
+        if new_stock < 0:
+            raise ValueError
     except ValueError:
-        print("\nError: Invalid quantity.")
+        print("\nError: Invalid stock quantity.")
         input("Press Enter to continue...")
         return
-    
-    success = inventory.update_stock_for_product(product_id, quantity)
-    
-    if not success:
-        input("Press Enter to continue...")
+
+    inventory.update_stock_for_product(product_id, new_stock)
+    input("\nPress Enter to continue...")
 
 
 def option_4_search(inventory):
     """Handle menu option 4: Search for Product."""
     print("\n--- Search Product ---\n")
-    
+
     product_id = input("Enter Product ID to search: ").strip()
-    
+
     product = inventory.search_product(product_id)
-    
+
     if product:
+        print("\nProduct Found")
         product.display_information()
-    
+
     input("\nPress Enter to continue...")
 
 
 def option_5_save_inventory(inventory):
     """Handle menu option 5: Save Inventory to File."""
     print("\n--- Save Inventory ---\n")
-    
-    # Save inventory using helper function
+
     success = fn.save_inventory(inventory)
-    
+
     if success:
-        print("✓ Inventory saved successfully!")
+        print("Inventory saved successfully to inventory.json.")
     else:
-        print("✗ Failed to save inventory.")
-    
+        print("Failed to save inventory.")
+
     input("\nPress Enter to continue...")
 
 
 def display_menu():
     """Print the menu options.
-    
+
     This function is called every time the user returns to the menu
     after performing an operation. It follows the Single Responsibility
     Principle by only displaying the menu, not processing any options.

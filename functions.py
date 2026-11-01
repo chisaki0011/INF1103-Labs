@@ -14,6 +14,8 @@ This module handles everything else (file I/O, prompts, displays).
 import json
 import os
 
+from product import Product
+
 
 # ---------------------------------------------------------------------------
 # File I/O Functions - Handle reading and saving inventory to JSON
@@ -60,30 +62,45 @@ def load_inventory(filename=INVENTORY_FILE):
 
 
 def save_inventory(inventory, filename=INVENTORY_FILE):
-    """Save inventory list to JSON file.
-    
-    This function handles all error cases: permission denied, disk full,
-    write lock conflicts, etc.
+    """Save the inventory to a JSON file.
+
+    Accepts either an Inventory object (the OOP system) or a plain list of
+    Product/dictionary objects (the Week 5 functional system). Products are
+    converted with Product.to_dict() so the result is JSON-serialisable.
 
     Args:
-        inventory (list): List of product dictionaries to save.
+        inventory (Inventory | list): Inventory object or list of products.
         filename (str): Path to the JSON file to save to.
-        
+
     Returns:
         bool: True if saved successfully, False otherwise.
-              
+
     Example:
         >>> products = [{"id": "P001", "name": "Laptop", "price": 999.0, "stock": 5}]
         >>> save_inventory(products)
         True
     """
     try:
+        # An Inventory object exposes get_all_products(); a plain list does not.
+        if hasattr(inventory, "get_all_products"):
+            products = inventory.get_all_products()
+        else:
+            products = inventory
+
+        serialisable = []
+        for item in products:
+            if isinstance(item, dict):
+                serialisable.append(item)
+            elif hasattr(item, "to_dict"):
+                serialisable.append(item.to_dict())
+            else:
+                raise TypeError(f"Cannot serialise item of type {type(item).__name__}")
+
         with open(filename, "w") as file:
-            json.dump(inventory, file, indent=2)
-        print("Inventory saved successfully.")
+            json.dump(serialisable, file, indent=2)
         return True
-    except IOError:
-        print("Error: Could not write to file (permission denied or disk full).")
+    except (IOError, TypeError) as error:
+        print(f"Error: Could not write to file ({error}).")
         return False
 
 
@@ -93,28 +110,39 @@ def save_inventory(inventory, filename=INVENTORY_FILE):
 
 def display_all(inventory):
     """Display all products in the inventory.
-    
+
+    Accepts either an Inventory object, a list of Product objects, or a list
+    of product dictionaries (Week 5 compatibility).
+
     Args:
-        inventory (list): List of product dictionaries from JSON file.
-        
+        inventory (Inventory | list): Inventory object or list of products.
+
     Returns:
-        bool: True if successful, False if inventory is empty or invalid.
-              
+        bool: True if at least one product was displayed, False otherwise.
+
     Example:
         >>> products = [{"id": "P001", "name": "Laptop", "price": 999.0, "stock": 5}]
         >>> display_all(products)
         Inventory:
         ID: P001 | Name: Laptop | Price: $999.00 | Stock: 5
     """
+    if hasattr(inventory, "get_all_products"):
+        products = inventory.get_all_products()
+    else:
+        products = inventory
+
     print("Inventory:")
-    for product in inventory:
-        # Use f-string formatting to match Product.display_information() format
-        display_str = (f"ID: {product['id']} | "
-                       f"Name: {product['name']} | "
-                       f"Price: ${float(product['price']):.2f} | "
-                       f"Stock: {int(product['stock'])}")
-        print(display_str)
-    return len(inventory) > 0
+    for product in products:
+        if hasattr(product, "display_information"):
+            product.display_information()
+        else:
+            # Dictionary (Week 5) format
+            display_str = (f"ID: {product['id']} | "
+                           f"Name: {product['name']} | "
+                           f"Price: ${float(product['price']):.2f} | "
+                           f"Stock: {int(product['stock'])}")
+            print(display_str)
+    return len(products) > 0
 
 
 # ---------------------------------------------------------------------------
@@ -410,10 +438,9 @@ def update_stock(product_id, inventory):
     
     # Create a Product object to use its encapsulated update_stock method
     product_obj = Product(product_data)
-    
-    # Call the update_stock method (adds to current stock)
+
     old_stock = product_obj.get_stock()
-    product_obj.update_stock(new_stock - old_stock)  # Calculate delta
+    product_obj.update_stock(new_stock)
     
     print(f"Stock updated from {old_stock} to {product_obj.get_stock()}")
     
