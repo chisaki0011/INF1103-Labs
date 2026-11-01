@@ -1,3 +1,15 @@
+commit f7ff7a9fb89fca9493f0d897fbe3333e240fde15
+Author: chisaki0011 <senpai917@gmail.com>
+Date:   Sun Nov 1 11:44:23 2026 +0800
+
+    Lab 7: inheritance, overriding, abstraction and shipping interface
+
+commit 48e7f46ee683de15b8240b2cefd8c0b08fed1fc3
+Author: chisaki0011 <senpai917@gmail.com>
+Date:   Sun Nov 1 09:37:29 2026 +0800
+
+    Update log.txt for Week 5 / Week 8 submission
+
 commit 00acc9429076fb0a0942fcfeae70453d25a16541
 Author: chisaki0011 <senpai917@gmail.com>
 Date:   Sun Nov 1 09:37:16 2026 +0800
@@ -40,7 +52,7 @@ Date:   Sat Oct 31 23:22:11 2026 +0800
     
     - Resolve AttributeError when calling get_product_name() on Product object
     - Product class has get_name() method (not get_product_name()) per encapsulation pattern
-    - Fix UnicodeEncodeError by replacing checkmark ??? with ASCII text
+    - Fix UnicodeEncodeError by replacing checkmark ✓ with ASCII text
     
     Test Results - All 6 menu options verified:
       Option 1 (Display All): Loads and displays inventory.json products successfully
@@ -51,11 +63,11 @@ Date:   Sat Oct 31 23:22:11 2026 +0800
       Option 6 (Exit): Exits cleanly with auto-save call
     
     Pre-commit Checklist:
-      ??? Uses Inventory.add_product(), Inventory.search_product() methods
-      ??? No unnecessary validation prompts during load phase
-      ??? All validation function names consistent (get_*, not validate_*)
-      ??? Product class encapsulation preserved (private attributes, public getters)
-      ??? Module separation maintained per lab brief Section 2.5
+      ✓ Uses Inventory.add_product(), Inventory.search_product() methods
+      ✓ No unnecessary validation prompts during load phase
+      ✓ All validation function names consistent (get_*, not validate_*)
+      ✓ Product class encapsulation preserved (private attributes, public getters)
+      ✓ Module separation maintained per lab brief Section 2.5
 
 commit 6d7ba79f4c291082c6ca4eb021bac20f5710db6e
 Author: chisaki0011 <senpai917@gmail.com>
