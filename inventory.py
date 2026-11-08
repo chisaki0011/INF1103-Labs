@@ -43,16 +43,21 @@ class Inventory:
         >>> inv.search_product("P001")
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Inventory with an empty collection of Product objects."""
-        self._products = []  # Private collection of Product objects
+        self._products: list[Product] = []
 
-    def add_product(self, product):
+    @property
+    def products(self) -> list[Product]:
+        """Return a copy of the products currently in this inventory."""
+        return self._products.copy()
+
+    def add_product(self, product: Product | dict[str, object]) -> bool:
         """
         Add a new Product to the inventory.
 
-        Accepts a Product object (as shown in the lab brief) or a dictionary
-        (used when loading inventory.json). Duplicate product IDs are rejected.
+        Accepts a Product object or a dictionary (used when loading
+        inventory.json). Duplicate product IDs are rejected.
 
         Args:
             product (Product | dict): The product to add.
