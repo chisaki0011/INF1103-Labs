@@ -76,6 +76,11 @@ the shared product details, and provide fulfilment information. The physical
 product adds weight and shipping; the digital product adds its download size.
 Neither subclass removes or weakens the behavior promised by `Product`.
 
+The inventory can therefore display a mixed list with one loop. Each object
+responds with its own weight or download size and its own fulfilment message.
+That is polymorphism; the shared `Product` behavior is what lets the subclasses
+stand in for the base type without surprising the caller.
+
 The [UML diagrams](uml-diagrams.md) show these relationships and the types
 used by the main classes. The [Lab 7 reflection](reflection.md) has the
 earlier inheritance and abstraction discussion.
