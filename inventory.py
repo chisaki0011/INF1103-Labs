@@ -143,7 +143,7 @@ class Inventory:
             product.display_information()
         print("-" * 60)
 
-    def update_stock_for_product(self, product_id, new_stock):
+    def update_stock_for_product(self, product_id: str, new_stock: int) -> bool:
         """
         Set the stock quantity for a specific product.
 
@@ -173,7 +173,7 @@ class Inventory:
             print(f"Error: {error}")
             return False
 
-    def get_all_products(self):
+    def get_all_products(self) -> list[Product]:
         """
         Return a list of all products in the inventory.
 
@@ -183,7 +183,7 @@ class Inventory:
         """
         return self._products.copy()
 
-    def to_dict_list(self):
+    def to_dict_list(self) -> list[dict[str, object]]:
         """
         Return the inventory as a list of JSON-serialisable dictionaries.
 
