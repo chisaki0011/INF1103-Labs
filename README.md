@@ -100,7 +100,11 @@ earlier inheritance and abstraction discussion.
 | `functions.py` | Inventory JSON loading, saving, and input helpers |
 | `inventory.json` | Saved product data |
 | `test_products.py` | Lab 7 product and persistence tests |
-| `test_lab8.py` | Lab 8 relationship and substitutability tests |
+| `test_suppliers.py` | Supplier associations and persistence tests |
+| `test_inventory_aggregation.py` | Product removal and transfer tests |
+| `test_orders.py` | Order-line ownership, subtotals, and totals |
+| `test_polymorphism.py` | Substitutability and polymorphic behavior |
+| `order_line.py` | Product and quantity within an order |
 | `uml-diagrams.md` | Class diagrams and relationship notes |
 
 Earlier files from the functional labs are kept in the repository for
