@@ -1,16 +1,15 @@
 """
-Inventory Module - Lab 7 (Inheritance, Overriding and Abstraction)
-==================================================================
+Inventory Module - Lab 8 (Aggregation and Polymorphism)
+=======================================================
 
 This module handles the INVENTORY (collection of products) using Object-Oriented
 Programming. The Inventory class has ONE responsibility: manage a collection of
 Product objects.
 
-The Inventory works with the abstract Product type, so it does not know or care
-whether a product is physical or digital. It only calls the public methods that
-every product promises to provide (get_product_id(), display_information(),
-to_dict(), ...). New product types can therefore be added without changing this
-class (polymorphism + Open/Closed Principle).
+The Inventory aggregates Product objects. Products can exist before they are
+added and remain usable after removal. It works with the abstract Product type,
+so it does not know or care whether a product is physical or digital. It only
+calls the public methods that every product promises to provide.
 
 According to the lab brief, the Inventory class should NOT:
 - Load or save files
