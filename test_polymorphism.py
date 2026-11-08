@@ -69,6 +69,30 @@ class SubstitutabilityTests(unittest.TestCase):
         self.assertIn("Requires physical shipping", output.getvalue())
         self.assertIn("Delivered digitally", output.getvalue())
 
+    def test_one_product_loop_invokes_each_fulfilment_implementation(self) -> None:
+        inventory = Inventory()
+        inventory.add_product(
+            PhysicalProduct(
+                "P405", "Parcel", 14.0, 2, 1.0,
+                supplier=Supplier("SUP-5", "Parcel Ltd", "p@example.test"),
+            )
+        )
+        inventory.add_product(
+            DigitalProduct(
+                "P406", "Manual", 3.0, 7, 1.0,
+                supplier=Supplier("SUP-6", "Docs Ltd", "d@example.test"),
+            )
+        )
+
+        with redirect_stdout(io.StringIO()):
+            fulfilment = [
+                product.get_fulfilment_info()
+                for product in inventory.products
+            ]
+
+        self.assertIn("physical shipping", fulfilment[0])
+        self.assertIn("digitally", fulfilment[1])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
