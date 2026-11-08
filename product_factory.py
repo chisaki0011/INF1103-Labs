@@ -18,17 +18,17 @@ from product import Product
 
 
 #: Maps the "type" value stored in inventory.json to its class.
-PRODUCT_CLASSES = {
+PRODUCT_CLASSES: dict[str, type[Product]] = {
     "physical": PhysicalProduct,
     "digital": DigitalProduct,
 }
 
 #: Older Lab 6 records have no "type" field. Treat them as physical products
 #: (the original Product was a generic stocked item) so old data still loads.
-DEFAULT_PRODUCT_TYPE = "physical"
+DEFAULT_PRODUCT_TYPE: str = "physical"
 
 
-def create_product(data):
+def create_product(data: Product | dict[str, object]) -> Product:
     """
     Create the appropriate Product subclass from a dictionary.
 
@@ -36,6 +36,7 @@ def create_product(data):
         data (Product | dict): A product object (returned unchanged) or a
             dictionary with at least 'id', 'name', 'price' and 'stock', plus
             'type' and the type-specific fields ('weight' or 'download_size').
+            New records may also contain a nested 'supplier' dictionary.
 
     Returns:
         Product: An instance of PhysicalProduct or DigitalProduct.

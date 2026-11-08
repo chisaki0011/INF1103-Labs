@@ -1,5 +1,5 @@
 """
-Inventory Management System - Main Application (Lab 7)
+Inventory Management System - Main Application (Lab 8)
 ======================================================
 
 This is the main application entry point that ties everything together.
@@ -9,6 +9,8 @@ Architecture:
 - physical_product.py  : PhysicalProduct - adds weight, can be shipped
 - digital_product.py   : DigitalProduct - adds download size
 - can_be_shipped.py    : CanBeShipped interface (shipping contract)
+- supplier.py          : Supplier details associated with products
+- order.py             : Orders and the order lines they own
 - product_factory.py   : rebuilds the right subclass when loading JSON
 - inventory.py         : handles the collection of products
 - functions.py         : file I/O, input validation, display operations
@@ -24,6 +26,7 @@ According to the Single Responsibility Principle and Separation of Concerns:
 from digital_product import DigitalProduct
 from inventory import Inventory
 from physical_product import PhysicalProduct
+from supplier import Supplier
 import functions as fn
 
 
@@ -125,6 +128,15 @@ def option_2_add_product(inventory):
     price = fn.get_valid_price()
     stock = fn.get_valid_stock()
 
+    supplier_id = input("Enter Supplier ID: ").strip()
+    supplier_name = input("Enter Supplier Name: ").strip()
+    supplier_email = input("Enter Supplier Contact Email: ").strip()
+    if not supplier_id or not supplier_name or not supplier_email:
+        print("\nError: Supplier ID, name, and email cannot be empty.")
+        input("Press Enter to continue...")
+        return
+    supplier = Supplier(supplier_id, supplier_name, supplier_email)
+
     print("\nProduct type:")
     print("  1. Physical product (has a weight and can be shipped)")
     print("  2. Digital product (has a download size)")
@@ -132,11 +144,15 @@ def option_2_add_product(inventory):
 
     if type_choice == "1":
         weight = fn.get_valid_weight()
-        product = PhysicalProduct(product_id, name, price, stock, weight)
+        product = PhysicalProduct(
+            product_id, name, price, stock, weight, supplier=supplier
+        )
 
     elif type_choice == "2":
         download_size = fn.get_valid_download_size()
-        product = DigitalProduct(product_id, name, price, stock, download_size)
+        product = DigitalProduct(
+            product_id, name, price, stock, download_size, supplier=supplier
+        )
 
     else:
         print("\nError: Invalid product type. Please choose 1 or 2.")

@@ -16,6 +16,7 @@ delivered by download, so shipping is not part of their contract.
 """
 
 from product import Product
+from supplier import Supplier
 
 
 class DigitalProduct(Product):
@@ -30,10 +31,17 @@ class DigitalProduct(Product):
           Fulfilment: Delivered digitally via download link.
     """
 
-    PRODUCT_TYPE = "digital"
+    PRODUCT_TYPE: str = "digital"
 
-    def __init__(self, product_id, name=None, price=None, stock=None,
-                 download_size=None):
+    def __init__(
+        self,
+        product_id: str | dict[str, object],
+        name: str | None = None,
+        price: float | None = None,
+        stock: int | None = None,
+        download_size: float | None = None,
+        supplier: Supplier | None = None,
+    ) -> None:
         """
         Initialize a DigitalProduct.
 
@@ -45,6 +53,7 @@ class DigitalProduct(Product):
             stock (int): Current stock quantity (ignored when a dictionary is supplied).
             download_size (float): Size of the download in megabytes
                 (ignored when a dictionary is supplied).
+            supplier (Supplier): Supplier associated with this product.
 
         Raises:
             ValueError: If no download size is supplied or it is not positive.
@@ -54,16 +63,16 @@ class DigitalProduct(Product):
             download_size = product_id.get("download_size", download_size)
 
         # Reuse the existing Product constructor (Lab 7, Section 1.3)
-        super().__init__(product_id, name, price, stock)
+        super().__init__(product_id, name, price, stock, supplier)
 
         if download_size is None:
             raise ValueError("DigitalProduct requires a download size in megabytes.")
 
-        self.__download_size = float(download_size)
+        self.__download_size: float = float(download_size)
         if self.__download_size <= 0:
             raise ValueError("Download size must be greater than zero.")
 
-    def get_download_size(self):
+    def get_download_size(self) -> float:
         """
         Get the product's download size (getter for the encapsulated attribute).
 
@@ -72,7 +81,7 @@ class DigitalProduct(Product):
         """
         return self.__download_size
 
-    def display_information(self):
+    def display_information(self) -> str:
         """
         Display the common product information plus the digital details.
 
@@ -93,7 +102,7 @@ class DigitalProduct(Product):
 
         return "\n".join([information, detail, fulfilment])
 
-    def get_fulfilment_info(self):
+    def get_fulfilment_info(self) -> str:
         """
         Implement the abstract method from Product.
 
@@ -102,7 +111,7 @@ class DigitalProduct(Product):
         """
         return "Delivered digitally via download link."
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, object]:
         """
         Extend the parent dictionary with the digital attributes.
 

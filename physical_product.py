@@ -17,6 +17,7 @@ This class:
 
 from can_be_shipped import CanBeShipped
 from product import Product
+from supplier import Supplier
 
 
 class PhysicalProduct(Product, CanBeShipped):
@@ -32,13 +33,21 @@ class PhysicalProduct(Product, CanBeShipped):
           Shipping cost: $14.00
     """
 
-    PRODUCT_TYPE = "physical"
+    PRODUCT_TYPE: str = "physical"
 
     # Simple shipping rule: a flat handling fee plus a rate per kilogram.
-    BASE_SHIPPING_FEE = 5.00
-    SHIPPING_RATE_PER_KG = 2.00
+    BASE_SHIPPING_FEE: float = 5.00
+    SHIPPING_RATE_PER_KG: float = 2.00
 
-    def __init__(self, product_id, name=None, price=None, stock=None, weight=None):
+    def __init__(
+        self,
+        product_id: str | dict[str, object],
+        name: str | None = None,
+        price: float | None = None,
+        stock: int | None = None,
+        weight: float | None = None,
+        supplier: Supplier | None = None,
+    ) -> None:
         """
         Initialize a PhysicalProduct.
 
@@ -49,6 +58,7 @@ class PhysicalProduct(Product, CanBeShipped):
             price (float): Product price (ignored when a dictionary is supplied).
             stock (int): Current stock quantity (ignored when a dictionary is supplied).
             weight (float): Weight in kilograms (ignored when a dictionary is supplied).
+            supplier (Supplier): Supplier associated with this product.
 
         Raises:
             ValueError: If no weight is supplied or the weight is negative.
@@ -58,16 +68,16 @@ class PhysicalProduct(Product, CanBeShipped):
             weight = product_id.get("weight", weight)
 
         # Reuse the existing Product constructor (Lab 7, Section 1.2)
-        super().__init__(product_id, name, price, stock)
+        super().__init__(product_id, name, price, stock, supplier)
 
         if weight is None:
             raise ValueError("PhysicalProduct requires a weight in kilograms.")
 
-        self.__weight = float(weight)
+        self.__weight: float = float(weight)
         if self.__weight < 0:
             raise ValueError("Weight cannot be negative.")
 
-    def get_weight(self):
+    def get_weight(self) -> float:
         """
         Get the product's weight (getter for the encapsulated attribute).
 
@@ -76,7 +86,7 @@ class PhysicalProduct(Product, CanBeShipped):
         """
         return self.__weight
 
-    def display_information(self):
+    def display_information(self) -> str:
         """
         Display the common product information plus the physical details.
 
@@ -101,7 +111,7 @@ class PhysicalProduct(Product, CanBeShipped):
 
         return "\n".join([information, detail, fulfilment, shipping])
 
-    def get_fulfilment_info(self):
+    def get_fulfilment_info(self) -> str:
         """
         Implement the abstract method from Product.
 
@@ -110,7 +120,7 @@ class PhysicalProduct(Product, CanBeShipped):
         """
         return "Requires physical shipping and handling."
 
-    def calculate_shipping_cost(self):
+    def calculate_shipping_cost(self) -> float:
         """
         Implement the CanBeShipped contract.
 
@@ -126,7 +136,7 @@ class PhysicalProduct(Product, CanBeShipped):
         cost = self.BASE_SHIPPING_FEE + self.SHIPPING_RATE_PER_KG * self.__weight
         return round(cost, 2)
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, object]:
         """
         Extend the parent dictionary with the physical attributes.
 
