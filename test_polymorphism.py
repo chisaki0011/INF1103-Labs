@@ -46,6 +46,29 @@ class SubstitutabilityTests(unittest.TestCase):
             [product.get_stock() for product in inventory.products], [3, 6]
         )
 
+    def test_inventory_displays_each_subclass_without_type_checks(self) -> None:
+        inventory = Inventory()
+        inventory.add_product(
+            PhysicalProduct(
+                "P403", "Mug", 8.0, 3, 0.4,
+                supplier=Supplier("SUP-3", "Kitchen Ltd", "k@example.test"),
+            )
+        )
+        inventory.add_product(
+            DigitalProduct(
+                "P404", "Recipe book", 5.0, 8, 2.0,
+                supplier=Supplier("SUP-4", "Food Ltd", "f@example.test"),
+            )
+        )
+
+        with redirect_stdout(io.StringIO()) as output:
+            inventory.display_all()
+
+        self.assertIn("Weight: 0.40 kg", output.getvalue())
+        self.assertIn("Download size: 2.00 MB", output.getvalue())
+        self.assertIn("Requires physical shipping", output.getvalue())
+        self.assertIn("Delivered digitally", output.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
