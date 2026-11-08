@@ -95,7 +95,14 @@ class Inventory:
 
         return True
 
-    def search_product(self, product_id):
+    def find_product(self, product_id: str) -> Product | None:
+        """Return the matching product, or None when it is not in this inventory."""
+        for product in self._products:
+            if product.get_product_id() == product_id:
+                return product
+        return None
+
+    def search_product(self, product_id: str) -> Product | None:
         """
         Search for a product by its ID.
 
@@ -105,14 +112,20 @@ class Inventory:
         Returns:
             Product | None: The found Product object if it exists, None otherwise.
         """
-        for product in self._products:
+        product = self.find_product(product_id)
+        if product is None:
+            print(f"Product with ID '{product_id}' not found.")
+        return product
+
+    def remove_product(self, product_id: str) -> bool:
+        """Remove a product reference without affecting the product itself."""
+        for index, product in enumerate(self._products):
             if product.get_product_id() == product_id:
-                return product
+                del self._products[index]
+                return True
+        return False
 
-        print(f"Product with ID '{product_id}' not found.")
-        return None
-
-    def display_all(self):
+    def display_all(self) -> None:
         """
         Display all products in the inventory.
 
