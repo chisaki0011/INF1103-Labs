@@ -12,8 +12,8 @@ classDiagram
         -str __name
         -float __price
         -int __stock
-        -Supplier __supplier
-        +__init__(product_id: str, name: str, price: float, stock: int, supplier: Supplier[0..1]) None
+        -Supplier supplier
+        +__init__(product_id: str, name: str, price: float, stock: int, supplier: Supplier [0..1]) None
         +update_stock(quantity: int) None
         +display_information() str
         +get_fulfilment_info()* str
@@ -132,3 +132,13 @@ The diagram reflects the model's intended lifecycle: remove a product from
 one inventory before transferring it to another. As with other Python
 references, the language itself does not prevent callers from holding extra
 references to objects.
+
+## Relationship and multiplicity check
+
+| Relationship | Whole / source | Part / target | Multiplicity |
+|---|---|---|---|
+| Association | `Supplier` | `Product` | A supplier may serve `0..*` products; each product has `1` supplier. |
+| Aggregation | `Inventory` | `Product` | An inventory holds `0..*` products; a product belongs to `0..1` inventory at a time. |
+| Composition | `Order` | `OrderLine` | An order owns `0..*` lines; every line belongs to exactly `1` order. |
+| Association | `Product` | `OrderLine` | Each line refers to `1` product; a product may be referenced by `0..*` lines. |
+| Inheritance | `Product` | `PhysicalProduct`, `DigitalProduct` | Each concrete product is a `Product`. |
